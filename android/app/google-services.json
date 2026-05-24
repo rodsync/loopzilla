@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "124675368424",
+    "project_id": "loopzilla-10fa8",
+    "storage_bucket": "loopzilla-10fa8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:124675368424:android:26ddaaa6cda3520afab05d",
+        "android_client_info": {
+          "package_name": "com.example.loopzilla_habit_tracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMMlbeYEMitDQiQaFGcV0ZsAm_Q7xGzIM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
