@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
-      // Start screen
+      // Start screen// Start screen// Start screen// Start screen// Start screen// Start screen// Start screen// Start screen// Start screen
       home: LoginScreen(),
 
       // (optional future use for navigation system)
