@@ -1,10 +1,12 @@
+// ===========================
+// main.dart
+// ===========================
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 
-// Screens
-import 'screens/auth/login_screen.dart';
-import 'screens/auth/signup_screen.dart';
+import 'firebase_options.dart';
+import 'screens/splash/logo_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,15 +25,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-
-      // Start screen// Start screen// Start screen// Start screen// Start screen// Start screen// Start screen// Start screen// Start screen
-      home: LoginScreen(),
-
-      // (optional future use for navigation system)
-      routes: {
-        '/login': (context) => LoginScreen(),
-        '/signup': (context) => SignupScreen(),
-      },
+      home: const LogoScreen(),
     );
   }
 }
