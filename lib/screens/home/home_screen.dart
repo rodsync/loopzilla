@@ -1,423 +1,870 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 import 'create_habit_screen.dart';
+import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() =>
-      _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState
-    extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> {
 
-  bool showCompleted = false;
+  /// 0 = All Tasks
+  /// 1 = Calendar
+  /// 2 = Completed
+  int selectedTab = 0;
+
+  DateTime today = DateTime.now();
+  DateTime focusedDay = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
 
-    String uid =
-        FirebaseAuth.instance.currentUser!.uid;
+    String uid = FirebaseAuth.instance.currentUser!.uid;
 
-    return Scaffold(
-      backgroundColor: Colors.white,
+    return WillPopScope(
 
-      appBar: AppBar(
+      onWillPop: () async {
+        SystemNavigator.pop();
+        return false;
+      },
+
+      child: Scaffold(
+
         backgroundColor: Colors.white,
-        elevation: 0,
 
-        title: const Text(
-          'LoopZilla',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
+        floatingActionButtonLocation:
+        FloatingActionButtonLocation.centerDocked,
+
+        floatingActionButton: SizedBox(
+          width: 56,
+          height: 56,
+
+          child: FloatingActionButton(
+            backgroundColor: const Color(0xFF5E8748),
+            elevation: 0,
+
+            onPressed: () {
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const CreateHabitScreen(),
+                ),
+              );
+            },
+
+            child: const Icon(
+              Icons.add,
+              color: Colors.white,
+              size: 34,
+              weight: 300,
+            ),
           ),
         ),
 
-        actions: [
+        bottomNavigationBar: BottomAppBar(
+          shape: const CircularNotchedRectangle(),
+          notchMargin: 6,
+          elevation: 0,
+          color: Colors.white,
 
-          IconButton(
-            onPressed: () {},
+          child: SizedBox(
+            height: 72,
 
-            icon: const Icon(
-              Icons.notifications_none,
-              color: Colors.black,
-            ),
-          ),
-        ],
-      ),
+            child: Row(
+              mainAxisAlignment:
+              MainAxisAlignment.spaceEvenly,
 
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-
-        child: Column(
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
-
-          children: [
-
-            const Text(
-              'Today Tasks',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            Text(
-              'Keep going and complete your habits.',
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 16,
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            Row(
               children: [
 
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      showCompleted = false;
-                    });
-                  },
+                /// HOME
+                Padding(
+                  padding: const EdgeInsets.only(right: 18),
 
-                  child: Container(
-                    padding:
-                    const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 10,
-                    ),
+                  child: IconButton(
+                    onPressed: () {},
 
-                    decoration: BoxDecoration(
-                      color: !showCompleted
-                          ? const Color(0xFF5E8748)
-                          : Colors.grey.shade100,
-
-                      borderRadius:
-                      BorderRadius.circular(20),
-                    ),
-
-                    child: Text(
-                      'All Tasks',
-
-                      style: TextStyle(
-                        color: !showCompleted
-                            ? Colors.white
-                            : Colors.black,
-
-                        fontWeight:
-                        FontWeight.w600,
-                      ),
+                    icon: const Icon(
+                      Icons.home_outlined,
+                      color: Colors.grey,
+                      size: 30,
                     ),
                   ),
                 ),
 
-                const SizedBox(width: 12),
+                const SizedBox(width: 42),
 
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      showCompleted = true;
-                    });
-                  },
+                /// PROFILE
+                Padding(
+                  padding: const EdgeInsets.only(left: 18),
 
-                  child: Container(
-                    padding:
-                    const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 10,
-                    ),
+                  child: IconButton(
+                    onPressed: () {
 
-                    decoration: BoxDecoration(
-                      color: showCompleted
-                          ? const Color(0xFF5E8748)
-                          : Colors.grey.shade100,
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                          const ProfileScreen(),
+                        ),
+                      );
+                    },
 
-                      borderRadius:
-                      BorderRadius.circular(20),
-                    ),
-
-                    child: Text(
-                      'Completed',
-
-                      style: TextStyle(
-                        color: showCompleted
-                            ? Colors.white
-                            : Colors.black,
-
-                        fontWeight:
-                        FontWeight.w600,
-                      ),
+                    icon: const Icon(
+                      Icons.person_outline,
+                      color: Colors.grey,
+                      size: 30,
                     ),
                   ),
                 ),
               ],
             ),
+          ),
+        ),
 
-            const SizedBox(height: 24),
+        body: SafeArea(
 
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(uid)
-                    .collection('habits')
-                    .snapshots(),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
 
-                builder: (context, snapshot) {
+            child: SingleChildScrollView(
 
-                  if (snapshot.connectionState ==
-                      ConnectionState.waiting) {
+              child: Column(
+                children: [
 
-                    return const Center(
-                      child:
-                      CircularProgressIndicator(),
-                    );
-                  }
+                  /// TOP BAR
+                  Row(
+                    children: [
 
-                  if (!snapshot.hasData ||
-                      snapshot.data!.docs.isEmpty) {
+                      Image.asset(
+                        'assets/logo.png',
+                        width: 42,
+                        height: 42,
+                      ),
 
-                    return const Center(
-                      child: Text(
-                        'No habits yet',
+                      const Spacer(),
+
+                      const Text(
+                        'Home',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    );
-                  }
 
-                  final habits =
-                  snapshot.data!.docs.where((doc) {
+                      const Spacer(),
 
-                    bool completed =
-                        doc['completed'] ?? false;
+                    ],
+                  ),
 
-                    return showCompleted
-                        ? completed
-                        : !completed;
+                  const SizedBox(height: 30),
 
-                  }).toList();
+                  /// NAVIGATION
+                  Container(
+                    padding: const EdgeInsets.all(4),
 
-                  if (habits.isEmpty) {
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius:
+                      BorderRadius.circular(30),
+                    ),
 
-                    return Center(
-                      child: Text(
-                        showCompleted
-                            ? 'No completed habits'
-                            : 'No active habits',
-                      ),
-                    );
-                  }
+                    child: Row(
+                      children: [
 
-                  return ListView.builder(
-                    itemCount: habits.length,
+                        /// ALL TASKS
+                        Expanded(
+                          child: GestureDetector(
 
-                    itemBuilder:
-                        (context, index) {
+                            onTap: () {
+                              setState(() {
+                                selectedTab = 0;
+                              });
+                            },
 
-                      final habit =
-                      habits[index];
+                            child: Container(
+                              padding:
+                              const EdgeInsets.symmetric(
+                                vertical: 12,
+                              ),
 
-                      return Container(
-                        margin:
-                        const EdgeInsets.only(
-                          bottom: 16,
-                        ),
-
-                        padding:
-                        const EdgeInsets.all(
-                          18,
-                        ),
-
-                        decoration:
-                        BoxDecoration(
-                          color: Color(
-                              habit['color']),
-                          borderRadius:
-                          BorderRadius.circular(
-                              20),
-                        ),
-
-                        child: Row(
-                          children: [
-
-                            Container(
-                              width: 52,
-                              height: 52,
-
-                              decoration:
-                              BoxDecoration(
-                                color:
-                                Colors.white,
+                              decoration: BoxDecoration(
+                                color: selectedTab == 0
+                                    ? const Color(
+                                  0xFF5E8748,
+                                )
+                                    : Colors.transparent,
 
                                 borderRadius:
-                                BorderRadius
-                                    .circular(
-                                    16),
+                                BorderRadius.circular(30),
                               ),
 
-                              child: Center(
-                                child: Text(
-                                  habit['emoji'],
+                              child: Text(
+                                'All tasks',
+                                textAlign: TextAlign.center,
 
-                                  style:
-                                  const TextStyle(
-                                    fontSize: 28,
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(
-                                width: 16),
-
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment:
-                                CrossAxisAlignment
-                                    .start,
-
-                                children: [
-
-                                  Text(
-                                    habit['title'],
-
-                                    style:
-                                    const TextStyle(
-                                      fontSize:
-                                      18,
-
-                                      fontWeight:
-                                      FontWeight
-                                          .bold,
-                                    ),
-                                  ),
-
-                                  const SizedBox(
-                                      height: 6),
-
-                                  Text(
-                                    habit['completed']
-                                        ? 'Completed'
-                                        : 'In Progress',
-
-                                    style:
-                                    TextStyle(
-                                      color: Colors
-                                          .grey
-                                          .shade700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            GestureDetector(
-                              onTap: () async {
-
-                                await FirebaseFirestore
-                                    .instance
-                                    .collection(
-                                    'users')
-                                    .doc(uid)
-                                    .collection(
-                                    'habits')
-                                    .doc(habit.id)
-                                    .update({
-                                  'completed':
-                                  !habit[
-                                  'completed'],
-                                });
-                              },
-
-                              child: CircleAvatar(
-                                radius: 16,
-
-                                backgroundColor:
-                                habit['completed']
-                                    ? Colors.green
-                                    : Colors.white,
-
-                                child: Icon(
-                                  habit['completed']
-                                      ? Icons.check
-                                      : Icons
-                                      .circle_outlined,
-
-                                  color:
-                                  habit['completed']
+                                style: TextStyle(
+                                  color: selectedTab == 0
                                       ? Colors.white
-                                      : Colors.grey,
+                                      : Colors.black,
+
+                                  fontWeight:
+                                  FontWeight.w600,
                                 ),
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                      );
-                    },
-                  );
-                },
+
+                        /// CALENDAR
+                        Expanded(
+                          child: GestureDetector(
+
+                            onTap: () {
+                              setState(() {
+                                selectedTab = 1;
+                              });
+                            },
+
+                            child: Container(
+                              padding:
+                              const EdgeInsets.symmetric(
+                                vertical: 12,
+                              ),
+
+                              decoration: BoxDecoration(
+                                color: selectedTab == 1
+                                    ? const Color(
+                                  0xFF5E8748,
+                                )
+                                    : Colors.transparent,
+
+                                borderRadius:
+                                BorderRadius.circular(30),
+                              ),
+
+                              child: Text(
+                                'Calendar',
+                                textAlign: TextAlign.center,
+
+                                style: TextStyle(
+                                  color: selectedTab == 1
+                                      ? Colors.white
+                                      : Colors.black,
+
+                                  fontWeight:
+                                  FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        /// COMPLETED
+                        Expanded(
+                          child: GestureDetector(
+
+                            onTap: () {
+                              setState(() {
+                                selectedTab = 2;
+                              });
+                            },
+
+                            child: Container(
+                              padding:
+                              const EdgeInsets.symmetric(
+                                vertical: 12,
+                              ),
+
+                              decoration: BoxDecoration(
+                                color: selectedTab == 2
+                                    ? const Color(
+                                  0xFF5E8748,
+                                )
+                                    : Colors.transparent,
+
+                                borderRadius:
+                                BorderRadius.circular(30),
+                              ),
+
+                              child: Text(
+                                'Completed',
+                                textAlign: TextAlign.center,
+
+                                style: TextStyle(
+                                  color: selectedTab == 2
+                                      ? Colors.white
+                                      : Colors.black,
+
+                                  fontWeight:
+                                  FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  /// CALENDAR TAB
+                  if (selectedTab == 1)
+
+                    SizedBox(
+                      height:
+                      MediaQuery.of(context).size.height * 0.7,
+
+                      child: StreamBuilder<QuerySnapshot>(
+
+                        stream: FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(uid)
+                            .collection('habits')
+                            .snapshots(),
+
+                        builder: (context, snapshot) {
+
+                          if (!snapshot.hasData) {
+
+                            return const Center(
+                              child:
+                              CircularProgressIndicator(),
+                            );
+                          }
+
+                          Map<DateTime,
+                              List<Map<String, dynamic>>>
+                          events = {};
+
+                          for (var doc
+                          in snapshot.data!.docs) {
+
+                            final data =
+                            doc.data()
+                            as Map<String, dynamic>;
+
+                            if (data.containsKey('date') &&
+                                data['date'] != null) {
+
+                              DateTime date =
+                              (data['date']
+                              as Timestamp)
+                                  .toDate();
+
+                              final cleanDate = DateTime(
+                                date.year,
+                                date.month,
+                                date.day,
+                              );
+
+                              if (events[cleanDate] ==
+                                  null) {
+                                events[cleanDate] = [];
+                              }
+
+                              events[cleanDate]!
+                                  .add(data);
+                            }
+                          }
+
+                          final selectedHabits =
+                          snapshot.data!.docs.where(
+                                (doc) {
+
+                              final data =
+                              doc.data()
+                              as Map<String,
+                                  dynamic>;
+
+                              if (!data.containsKey(
+                                  'date')) {
+                                return false;
+                              }
+
+                              DateTime date =
+                              (data['date']
+                              as Timestamp)
+                                  .toDate();
+
+                              return isSameDay(
+                                today,
+                                date,
+                              );
+                            },
+                          ).toList();
+
+                          return Column(
+                            children: [
+
+                              /// CALENDAR
+                              Container(
+                                padding:
+                                const EdgeInsets.all(12),
+
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+
+                                  borderRadius:
+                                  BorderRadius.circular(
+                                    20,
+                                  ),
+
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black
+                                          .withOpacity(
+                                        0.05,
+                                      ),
+
+                                      blurRadius: 10,
+                                    ),
+                                  ],
+                                ),
+
+                                child: TableCalendar(
+
+                                  firstDay:
+                                  DateTime.utc(
+                                    2020,
+                                    1,
+                                    1,
+                                  ),
+
+                                  lastDay:
+                                  DateTime.utc(
+                                    2100,
+                                    12,
+                                    31,
+                                  ),
+
+                                  focusedDay:
+                                  focusedDay,
+
+                                  selectedDayPredicate:
+                                      (day) {
+
+                                    return isSameDay(
+                                      today,
+                                      day,
+                                    );
+                                  },
+
+                                  onDaySelected:
+                                      (
+                                      selectedDay,
+                                      focusedDay,
+                                      ) {
+
+                                    setState(() {
+
+                                      today =
+                                          selectedDay;
+
+                                      this.focusedDay =
+                                          focusedDay;
+                                    });
+                                  },
+
+                                  eventLoader: (day) {
+
+                                    return events[
+                                    DateTime(
+                                      day.year,
+                                      day.month,
+                                      day.day,
+                                    )
+                                    ] ??
+                                        [];
+                                  },
+
+                                  headerStyle:
+                                  const HeaderStyle(
+                                    formatButtonVisible:
+                                    false,
+
+                                    titleCentered:
+                                    true,
+                                  ),
+
+                                  calendarStyle:
+                                  CalendarStyle(
+
+                                    todayDecoration:
+                                    const BoxDecoration(
+                                      color: Color(
+                                        0xFF5E8748,
+                                      ),
+
+                                      shape:
+                                      BoxShape.circle,
+                                    ),
+
+                                    selectedDecoration:
+                                    const BoxDecoration(
+                                      color: Color(
+                                        0xFFF5B24F,
+                                      ),
+
+                                      shape:
+                                      BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 20),
+
+                              /// HABITS OF SELECTED DATE
+                              Expanded(
+                                child:
+                                selectedHabits.isEmpty
+
+                                    ? const Center(
+                                  child: Text(
+                                    'No habits on this date',
+                                  ),
+                                )
+
+                                    : ListView.builder(
+
+                                  itemCount:
+                                  selectedHabits.length,
+
+                                  itemBuilder:
+                                      (
+                                      context,
+                                      index,
+                                      ) {
+
+                                    final habit =
+                                    selectedHabits[
+                                    index];
+
+                                    return Container(
+
+                                      margin:
+                                      const EdgeInsets.only(
+                                        bottom: 14,
+                                      ),
+
+                                      padding:
+                                      const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 14,
+                                      ),
+
+                                      decoration:
+                                      BoxDecoration(
+                                        color: Color(
+                                          habit['color'],
+                                        ),
+
+                                        borderRadius:
+                                        BorderRadius.circular(
+                                          14,
+                                        ),
+                                      ),
+
+                                      child: Row(
+                                        children: [
+
+                                          Text(
+                                            habit['emoji'],
+                                            style:
+                                            const TextStyle(
+                                              fontSize: 24,
+                                            ),
+                                          ),
+
+                                          const SizedBox(
+                                            width: 14,
+                                          ),
+
+                                          Expanded(
+                                            child: Text(
+                                              habit['title'],
+                                              style:
+                                              const TextStyle(
+                                                fontSize: 16,
+
+                                                fontWeight:
+                                                FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+
+                  /// ALL TASKS + COMPLETED
+                  if (selectedTab != 1)
+
+                    SizedBox(
+                      height:
+                      MediaQuery.of(context).size.height * 0.7,
+
+                      child:
+                      StreamBuilder<QuerySnapshot>(
+
+                        stream: FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(uid)
+                            .collection('habits')
+                            .snapshots(),
+
+                        builder: (context, snapshot) {
+
+                          if (!snapshot.hasData) {
+
+                            return const Center(
+                              child:
+                              CircularProgressIndicator(),
+                            );
+                          }
+
+                          final habits =
+                          snapshot.data!.docs.where(
+                                (doc) {
+
+                              bool completed =
+                                  doc['completed'] ??
+                                      false;
+
+                              if (selectedTab == 0) {
+                                return !completed;
+                              }
+
+                              return completed;
+                            },
+                          ).toList();
+
+                          if (habits.isEmpty) {
+
+                            return Center(
+                              child: Text(
+                                selectedTab == 0
+                                    ? 'No active habits'
+                                    : 'No completed habits',
+                              ),
+                            );
+                          }
+
+                          return ListView.builder(
+
+                            itemCount: habits.length,
+
+                            itemBuilder:
+                                (context, index) {
+
+                              final habit =
+                              habits[index];
+
+                              return Container(
+
+                                margin:
+                                const EdgeInsets.only(
+                                  bottom: 14,
+                                ),
+
+                                padding:
+                                const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+
+                                decoration:
+                                BoxDecoration(
+                                  color: Color(
+                                    habit['color'],
+                                  ),
+
+                                  borderRadius:
+                                  BorderRadius.circular(
+                                    14,
+                                  ),
+                                ),
+
+                                child: Row(
+                                  children: [
+
+                                    Text(
+                                      habit['emoji'],
+
+                                      style:
+                                      const TextStyle(
+                                        fontSize: 24,
+                                      ),
+                                    ),
+
+                                    const SizedBox(
+                                      width: 14,
+                                    ),
+
+                                    Expanded(
+                                      child: Text(
+                                        habit['title'],
+
+                                        style:
+                                        const TextStyle(
+                                          fontSize: 16,
+
+                                          fontWeight:
+                                          FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+
+                                    /// EDIT BUTTON
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.edit_outlined,
+                                        color: Colors.black54,
+                                      ),
+
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => CreateHabitScreen(
+                                              habit: habit,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+
+                                    /// DELETE BUTTON
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete_outline,
+                                        color: Colors.red,
+                                      ),
+
+                                      onPressed: () async {
+
+                                        bool? confirmDelete = await showDialog(
+                                          context: context,
+                                          builder: (context) {
+                                            return AlertDialog(
+                                              title: const Text('Delete Habit'),
+                                              content: const Text(
+                                                'Are you sure you want to delete this habit?',
+                                              ),
+                                              actions: [
+
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(context, false);
+                                                  },
+                                                  child: const Text('Cancel'),
+                                                ),
+
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(context, true);
+                                                  },
+                                                  child: const Text(
+                                                    'Delete',
+                                                    style: TextStyle(
+                                                      color: Colors.red,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+
+                                        if (confirmDelete == true) {
+
+                                          await FirebaseFirestore.instance
+                                              .collection('users')
+                                              .doc(uid)
+                                              .collection('habits')
+                                              .doc(habit.id)
+                                              .delete();
+
+                                          if (!mounted) return;
+
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Habit deleted'),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    ),
+
+                                    GestureDetector(
+
+                                      onTap: () async {
+
+                                        await FirebaseFirestore
+                                            .instance
+                                            .collection(
+                                            'users')
+                                            .doc(uid)
+                                            .collection(
+                                            'habits')
+                                            .doc(habit.id)
+                                            .update({
+                                          'completed':
+                                          !habit[
+                                          'completed'],
+                                        });
+                                      },
+
+                                      child:
+                                      CircleAvatar(
+                                        radius: 14,
+
+                                        backgroundColor:
+                                        Colors.green,
+
+                                        child: Icon(
+                                          habit[
+                                          'completed']
+                                              ? Icons.check
+                                              : Icons.circle,
+
+                                          color:
+                                          Colors.white,
+
+                                          size: 18,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
-      ),
-
-      floatingActionButton:
-      FloatingActionButton(
-        backgroundColor:
-        const Color(0xFF5E8748),
-
-        onPressed: () {
-
-          Navigator.push(
-            context,
-
-            MaterialPageRoute(
-              builder: (_) =>
-              const CreateHabitScreen(),
-            ),
-          );
-        },
-
-        child: const Icon(Icons.add),
-      ),
-
-      bottomNavigationBar:
-      BottomNavigationBar(
-        currentIndex: 0,
-
-        selectedItemColor:
-        const Color(0xFF5E8748),
-
-        items: const [
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart),
-            label: 'Stats',
-          ),
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
       ),
     );
   }
