@@ -128,7 +128,6 @@ class _LoginScreenState
 
                 child: ElevatedButton(
                   onPressed: () async {
-
                     final email =
                     emailController.text.trim();
 
@@ -137,7 +136,6 @@ class _LoginScreenState
 
                     if (email.isEmpty ||
                         password.isEmpty) {
-
                       ScaffoldMessenger.of(context)
                           .showSnackBar(
                         const SnackBar(
@@ -150,7 +148,6 @@ class _LoginScreenState
                     }
 
                     try {
-
                       await FirebaseAuth.instance
                           .signInWithEmailAndPassword(
                         email: email,
@@ -174,16 +171,13 @@ class _LoginScreenState
                               ?? false;
 
                       if (onboardingDone) {
-
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
                             builder: (_) => HomeScreen(),
                           ),
                         );
-
                       } else {
-
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
@@ -191,17 +185,29 @@ class _LoginScreenState
                           ),
                         );
                       }
+                    } on FirebaseAuthException catch (e) {
+                      String message = "Login failed";
 
-                    } on FirebaseAuthException
-                    catch (e) {
+                      if (e.code == 'user-not-found') {
+                        message = "No account found with this email";
+                      }
 
-                      ScaffoldMessenger.of(context)
-                          .showSnackBar(
+                      else if (e.code == 'wrong-password') {
+                        message = "Incorrect password";
+                      }
+
+                      else if (e.code == 'invalid-email') {
+                        message = "Invalid email address";
+                      }
+
+                      else if (e.code == 'invalid-credential') {
+                        message = "Incorrect email or password";
+                      }
+
+                      ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(
-                            e.message ??
-                                "Login failed",
-                          ),
+                          content: Text(message),
+                          backgroundColor: Colors.red,
                         ),
                       );
                     }

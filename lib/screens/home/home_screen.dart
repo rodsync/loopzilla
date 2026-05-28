@@ -21,8 +21,89 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 2 = Completed
   int selectedTab = 0;
 
+  /// TIME FILTER
+  String selectedTimeFilter = 'All';
+
   DateTime today = DateTime.now();
   DateTime focusedDay = DateTime.now();
+
+  /// TIME FILTER FUNCTION
+  bool matchesTimeFilter(String time) {
+
+    if (selectedTimeFilter == 'All') {
+      return true;
+    }
+
+    final hour =
+    int.parse(time.split(':')[0]);
+
+    if (selectedTimeFilter == 'Morning') {
+      return hour >= 5 && hour < 12;
+    }
+
+    if (selectedTimeFilter == 'Afternoon') {
+      return hour >= 12 && hour < 18;
+    }
+
+    if (selectedTimeFilter == 'Evening') {
+      return hour >= 18 || hour < 5;
+    }
+
+    return true;
+  }
+
+  /// TIME FILTER BUTTON
+  Widget buildTimeFilter(String label) {
+
+    final selected =
+        selectedTimeFilter == label;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 10),
+
+      child: GestureDetector(
+
+        onTap: () {
+          setState(() {
+            selectedTimeFilter = label;
+          });
+        },
+
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 10,
+          ),
+
+          decoration: BoxDecoration(
+            color: selected
+                ? const Color(0xFF5E8748)
+                : Colors.white,
+
+            borderRadius:
+            BorderRadius.circular(30),
+
+            border: Border.all(
+              color: Colors.grey.shade300,
+            ),
+          ),
+
+          child: Text(
+            label,
+
+            style: TextStyle(
+              color:
+              selected
+                  ? Colors.white
+                  : Colors.black,
+
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -316,6 +397,29 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
 
                   const SizedBox(height: 24),
+
+                  /// TIME FILTER
+                  if (selectedTab == 0) ...[
+
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+
+                      child: Row(
+                        children: [
+
+                          buildTimeFilter('All'),
+
+                          buildTimeFilter('Morning'),
+
+                          buildTimeFilter('Afternoon'),
+
+                          buildTimeFilter('Evening'),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+                  ],
 
                   /// CALENDAR TAB
                   if (selectedTab == 1)
@@ -640,21 +744,50 @@ class _HomeScreenState extends State<HomeScreen> {
                             );
                           }
 
-                          final habits =
-                          snapshot.data!.docs.where(
-                                (doc) {
+                          List habits = snapshot.data!.docs.where((doc) {
 
-                              bool completed =
-                                  doc['completed'] ??
-                                      false;
+                            final data =
+                            doc.data() as Map<String, dynamic>;
 
-                              if (selectedTab == 0) {
-                                return !completed;
+                            bool completed =
+                                data['completed'] ?? false;
+
+                            String time =
+                                data['time'] ?? '00:00';
+
+                            int hour =
+                            int.parse(time.split(':')[0]);
+
+                            /// ALL TASKS
+                            if (selectedTab == 0) {
+
+                              if (completed) return false;
+
+                              /// ALL
+                              if (selectedTimeFilter == 'All') {
+                                return true;
                               }
 
-                              return completed;
-                            },
-                          ).toList();
+                              /// MORNING
+                              if (selectedTimeFilter == 'Morning') {
+                                return hour >= 5 && hour < 12;
+                              }
+
+                              /// AFTERNOON
+                              if (selectedTimeFilter == 'Afternoon') {
+                                return hour >= 12 && hour < 18;
+                              }
+
+                              /// EVENING
+                              if (selectedTimeFilter == 'Evening') {
+                                return hour >= 18 || hour < 5;
+                              }
+                            }
+
+                            /// COMPLETED TAB
+                            return completed;
+
+                          }).toList();
 
                           if (habits.isEmpty) {
 
@@ -732,24 +865,25 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                     ),
 
-                                    /// EDIT BUTTON
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.edit_outlined,
-                                        color: Colors.black54,
-                                      ),
+                                    /// EDIT BUTTON (ONLY FOR ACTIVE TASKS)
+                                    if (selectedTab == 0)
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.edit_outlined,
+                                          color: Colors.black54,
+                                        ),
 
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => CreateHabitScreen(
-                                              habit: habit,
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => CreateHabitScreen(
+                                                habit: habit,
+                                              ),
                                             ),
-                                          ),
-                                        );
-                                      },
-                                    ),
+                                          );
+                                        },
+                                      ),
 
                                     /// DELETE BUTTON
                                     IconButton(

@@ -12,32 +12,47 @@ class ProfileScreen extends StatefulWidget {
       _ProfileScreenState();
 }
 
-class _ProfileScreenState
-    extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen> {
 
   String selectedEmoji = '😊';
 
   final List<String> emojis = [
-    '😊',
-    '😎',
-    '🔥',
-    '🌟',
-    '💪',
-    '🚀',
-    '🎯',
-    '🧠',
-    '🐱',
-    '🐼',
-    '👑',
-    '❤️',
+    '😊', '😎', '🔥', '🌟',
+    '💪', '🚀', '🎯', '🧠',
+    '🐱', '🐼', '👑', '❤️',
   ];
 
-  void showEmojiPicker() {
+  @override
+  void initState() {
+    super.initState();
+    loadEmoji();
+  }
 
+  Future<void> loadEmoji() async {
+    String uid =
+        FirebaseAuth.instance.currentUser!.uid;
+
+    DocumentSnapshot userDoc =
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+
+    if (userDoc.exists) {
+      final data =
+      userDoc.data()
+      as Map<String, dynamic>;
+
+      setState(() {
+        selectedEmoji = data['emoji'] ?? '😊';
+      });
+    }
+  }
+
+  void showEmojiPicker() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(24),
@@ -45,27 +60,30 @@ class _ProfileScreenState
       ),
 
       builder: (_) {
-
         return Padding(
           padding: const EdgeInsets.all(20),
-
           child: GridView.builder(
             shrinkWrap: true,
-
             itemCount: emojis.length,
-
             gridDelegate:
             const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 4,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
             ),
-
             itemBuilder: (context, index) {
-
               return GestureDetector(
+                onTap: () async {
 
-                onTap: () {
+                  String uid =
+                      FirebaseAuth.instance.currentUser!.uid;
+
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(uid)
+                      .update({
+                    'emoji': emojis[index],
+                  });
 
                   setState(() {
                     selectedEmoji = emojis[index];
@@ -80,7 +98,6 @@ class _ProfileScreenState
                     borderRadius:
                     BorderRadius.circular(20),
                   ),
-
                   child: Center(
                     child: Text(
                       emojis[index],
@@ -99,36 +116,28 @@ class _ProfileScreenState
   }
 
   void showLogoutDialog() {
-
     showDialog(
       context: context,
-
       builder: (_) {
-
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius:
             BorderRadius.circular(20),
           ),
-
           title: const Text(
             'Logout',
             style: TextStyle(
               fontWeight: FontWeight.bold,
             ),
           ),
-
           content: const Text(
             'Are you sure you want to logout?',
           ),
-
           actions: [
-
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-
               child: const Text(
                 'Cancel',
                 style: TextStyle(
@@ -136,37 +145,27 @@ class _ProfileScreenState
                 ),
               ),
             ),
-
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
-
                 shape: RoundedRectangleBorder(
                   borderRadius:
                   BorderRadius.circular(12),
                 ),
               ),
-
               onPressed: () async {
+                await FirebaseAuth.instance.signOut();
 
-                await FirebaseAuth.instance
-                    .signOut();
-
-                if (!context.mounted)
-                  return;
+                if (!context.mounted) return;
 
                 Navigator.pushAndRemoveUntil(
                   context,
-
                   MaterialPageRoute(
-                    builder: (_) =>
-                    const LoginScreen(),
+                    builder: (_) => const LoginScreen(),
                   ),
-
                       (route) => false,
                 );
               },
-
               child: const Text(
                 'Logout',
                 style: TextStyle(
@@ -182,7 +181,6 @@ class _ProfileScreenState
 
   @override
   Widget build(BuildContext context) {
-
     String uid =
         FirebaseAuth.instance.currentUser!.uid;
 
@@ -192,9 +190,7 @@ class _ProfileScreenState
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-
         centerTitle: true,
-
         title: const Text(
           'Profile',
           style: TextStyle(
@@ -214,7 +210,6 @@ class _ProfileScreenState
 
           if (snapshot.connectionState ==
               ConnectionState.waiting) {
-
             return const Center(
               child: CircularProgressIndicator(),
             );
@@ -222,7 +217,6 @@ class _ProfileScreenState
 
           if (!snapshot.hasData ||
               !snapshot.data!.exists) {
-
             return const Center(
               child: Text('No user data'),
             );
@@ -246,7 +240,6 @@ class _ProfileScreenState
                 /// PROFILE EMOJI
                 Center(
                   child: GestureDetector(
-
                     onTap: showEmojiPicker,
 
                     child: Stack(
@@ -258,22 +251,17 @@ class _ProfileScreenState
                         Container(
                           width: 110,
                           height: 110,
-
                           decoration: BoxDecoration(
-                            color:
-                            const Color(
+                            color: const Color(
                               0xFF5E8748,
                             ).withOpacity(0.15),
-
-                            shape:
-                            BoxShape.circle,
+                            shape: BoxShape.circle,
                           ),
 
                           child: Center(
                             child: Text(
                               selectedEmoji,
-                              style:
-                              const TextStyle(
+                              style: const TextStyle(
                                 fontSize: 52,
                               ),
                             ),
@@ -282,23 +270,15 @@ class _ProfileScreenState
 
                         Container(
                           padding:
-                          const EdgeInsets
-                              .all(8),
-
+                          const EdgeInsets.all(8),
                           decoration:
                           const BoxDecoration(
-                            color: Color(
-                              0xFF5E8748,
-                            ),
-
-                            shape:
-                            BoxShape.circle,
+                            color: Color(0xFF5E8748),
+                            shape: BoxShape.circle,
                           ),
-
                           child: const Icon(
                             Icons.edit,
-                            color:
-                            Colors.white,
+                            color: Colors.white,
                             size: 18,
                           ),
                         ),
@@ -309,12 +289,10 @@ class _ProfileScreenState
 
                 const SizedBox(height: 40),
 
-                /// USERNAME
                 const Text(
                   'Username',
                   style: TextStyle(
-                    fontWeight:
-                    FontWeight.bold,
+                    fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
                 ),
@@ -323,21 +301,14 @@ class _ProfileScreenState
 
                 Container(
                   width: double.infinity,
-                  padding:
-                  const EdgeInsets.all(18),
-
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
-
                     borderRadius:
-                    BorderRadius.circular(
-                      16,
-                    ),
+                    BorderRadius.circular(16),
                   ),
-
                   child: Text(
                     user['username'] ?? '',
-
                     style: const TextStyle(
                       fontSize: 16,
                     ),
@@ -346,12 +317,10 @@ class _ProfileScreenState
 
                 const SizedBox(height: 24),
 
-                /// EMAIL
                 const Text(
                   'Email',
                   style: TextStyle(
-                    fontWeight:
-                    FontWeight.bold,
+                    fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
                 ),
@@ -360,21 +329,14 @@ class _ProfileScreenState
 
                 Container(
                   width: double.infinity,
-                  padding:
-                  const EdgeInsets.all(18),
-
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
-
                     borderRadius:
-                    BorderRadius.circular(
-                      16,
-                    ),
+                    BorderRadius.circular(16),
                   ),
-
                   child: Text(
                     user['email'] ?? '',
-
                     style: const TextStyle(
                       fontSize: 16,
                     ),
@@ -383,36 +345,23 @@ class _ProfileScreenState
 
                 const Spacer(),
 
-                /// LOGOUT BUTTON
                 SizedBox(
                   width: double.infinity,
-
                   child: ElevatedButton(
-                    style:
-                    ElevatedButton.styleFrom(
-                      backgroundColor:
-                      Colors.red,
-
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
                       padding:
-                      const EdgeInsets
-                          .symmetric(
+                      const EdgeInsets.symmetric(
                         vertical: 18,
                       ),
-
-                      shape:
-                      RoundedRectangleBorder(
+                      shape: RoundedRectangleBorder(
                         borderRadius:
-                        BorderRadius
-                            .circular(20),
+                        BorderRadius.circular(20),
                       ),
                     ),
-
-                    onPressed:
-                    showLogoutDialog,
-
+                    onPressed: showLogoutDialog,
                     child: const Text(
                       'Logout',
-
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
