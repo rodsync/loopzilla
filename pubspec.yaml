@@ -24,6 +24,15 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
 flutter:
+  fonts:
+    - family: Louis George
+      fonts:
+        - asset: assets/fonts/Louis-George-Cafe-Light.ttf
+        - asset: assets/fonts/Louis-George-Cafe.ttf
+        - asset: assets/fonts/Louis-George-Cafe-Bold.ttf
+        - asset: assets/fonts/Naked-Bold.otf
+        - asset: assets/fonts/Notion-HeavyItalic.otf
+        - asset: assets/fonts/Notion-Medium.otf
 
   uses-material-design: true
 
